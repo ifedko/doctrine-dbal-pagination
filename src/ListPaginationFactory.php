@@ -3,7 +3,6 @@
 namespace Ifedko\DoctrineDbalPagination;
 
 use Doctrine\DBAL\Connection;
-use Ifedko\DoctrineDbalPagination\ListPagination;
 use Ifedko\DoctrineDbalPagination\Exception\ListPaginationFactoryException;
 
 class ListPaginationFactory
@@ -21,7 +20,13 @@ class ListPaginationFactory
             throw new ListPaginationFactoryException(sprintf('Unknown list builder class %s', $listBuilderFullClassName));
         }
 
-        $listBuilder = new $listBuilderFullClassName($dbConnection);
+        if (in_array(ListPaginatorBuilderConfiguratorInterface::class, class_implements($listBuilderFullClassName), true)) {
+            $listBuilderInterfaceImplementation = new $listBuilderFullClassName();
+            $listBuilder = new ListPaginationBuilder($dbConnection, $listBuilderInterfaceImplementation);
+        } else {
+            $listBuilder = new $listBuilderFullClassName($dbConnection);
+        }
+
         $listBuilder->configure($listParameters);
 
         return new ListPagination($listBuilder);
